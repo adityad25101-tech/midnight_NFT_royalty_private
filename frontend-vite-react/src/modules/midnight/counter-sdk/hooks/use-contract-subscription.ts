@@ -1,10 +1,9 @@
-
-import { DerivedState } from "../api/common-types";
+import { type DerivedState } from "../api/common-types";
 import { useCallback, useEffect, useState } from "react";
-import { ContractControllerInterface } from "../api/contractController";
-import { Observable } from "rxjs";
+import { type ContractControllerInterface } from "../api/contractController";
+import { type Observable } from "rxjs";
 import { useWallet } from "../../wallet-widget/hooks/useWallet";
-import { ContractDeployment, ContractFollow } from "../contexts";
+import { type ContractDeployment, type ContractFollow } from "../contexts";
 import { useDeployedContracts } from "./use-deployment";
 import { useProviders } from "./use-providers";
 
@@ -25,7 +24,7 @@ export const useContractSubscription = () => {
   const onDeploy = async (): Promise<ContractFollow> => {
     const contractFollow = await deploy.deployContract();
     return contractFollow;
-  }
+  };
 
   const onJoin = useCallback(async (): Promise<void> => {
     setCounterDeploymentObservable(deploy.joinContract().observable);
@@ -74,10 +73,11 @@ export const useContractSubscription = () => {
     }
   }, [deployedContractAPI]);
 
-  return {       
+  return {
     deployedContractAPI,
     derivedState,
+    contractDeployment,
     onDeploy,
-    providers
+    providers,
   };
 };

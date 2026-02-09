@@ -1,46 +1,33 @@
-import * as ledger from "@midnight-ntwrk/ledger-v6";
+import * as ledger from "@midnight-ntwrk/ledger-v7";
 import {
   type MidnightProvider,
   type WalletProvider,
-  type BalancedProvingRecipe,
-  PrivateStateProvider,
-  ZKConfigProvider,
-  ProofProvider,
-  PublicDataProvider,
+  type PrivateStateProvider,
+  type ProofProvider,
+  type PublicDataProvider,
+  type UnboundTransaction,
+  type ZKConfigProvider,
 } from "@midnight-ntwrk/midnight-js-types";
 import { createContext, useCallback, useMemo, useState } from "react";
 import { indexerPublicDataProvider } from "@midnight-ntwrk/midnight-js-indexer-public-data-provider";
-// import { levelPrivateStateProvider } from "@midnight-ntwrk/midnight-js-level-private-state-provider";
-import { Logger } from "pino";
-import type {
-  CounterCircuits,
-  CounterPrivateStateId,
-} from "../api/common-types";
-import { CounterProviders } from "../api/common-types";
+import { type Logger } from "pino";
+import { CounterPrivateStateId, type CounterCircuits, type CounterProviders } from "../api/common-types";
 import { useWallet } from "../../wallet-widget/hooks/useWallet";
-// import { WrappedPrivateStateProvider } from "../../wallet-widget/utils/providersWrappers/privateStateProvider";
 import {
-  ActionMessages,
-  ProviderAction,
+  type ActionMessages,
+  type ProviderAction,
   WrappedPublicDataProvider,
 } from "../../wallet-widget/utils/providersWrappers/publicDataProvider";
 import { CachedFetchZkConfigProvider } from "../../wallet-widget/utils/providersWrappers/zkConfigProvider";
-import {
-  noopProofClient,
-  proofClient,
-} from "../../wallet-widget/utils/providersWrappers/proofClient";
 import { inMemoryPrivateStateProvider } from "../../wallet-widget/utils/customImplementations/in-memory-private-state-provider";
-import { CounterPrivateState } from "@meshsdk/counter-contract";
-import {
-  fromHex,
-  ShieldedCoinInfo,
-  toHex,
-} from "@midnight-ntwrk/compact-runtime";
+import { toHex, fromHex } from "@midnight-ntwrk/compact-runtime";
+import { httpClientProofProvider } from "@midnight-ntwrk/midnight-js-http-client-proof-provider";
+import type { CounterPrivateState } from "@meshsdk/counter-contract";
 
-export interface ProvidersState {
+export interface CounterProvidersState {
   privateStateProvider: PrivateStateProvider<typeof CounterPrivateStateId>;
   zkConfigProvider?: ZKConfigProvider<CounterCircuits>;
-  proofProvider: ProofProvider<CounterCircuits>;
+  proofProvider: ProofProvider;
   publicDataProvider?: PublicDataProvider;
   walletProvider?: WalletProvider;
   midnightProvider?: MidnightProvider;
@@ -48,19 +35,16 @@ export interface ProvidersState {
   flowMessage?: string;
 }
 
-interface ProviderProps {
+interface CounterProviderProps {
   children: React.ReactNode;
   logger: Logger;
 }
 
-export const ProvidersContext = createContext<ProvidersState | undefined>(
-  undefined
-);
+export const CounterProvidersContext = createContext<CounterProvidersState | undefined>(undefined);
 
-export const Provider = ({ children, logger }: ProviderProps) => {
+export const CounterProvider = ({ children, logger }: CounterProviderProps) => {
   const [flowMessage, setFlowMessage] = useState<string | undefined>(undefined);
-
-  const { serviceUriConfig, shieldedAddresses, connectedAPI, status } = useWallet();
+  const { serviceUriConfig, connectedAPI, status } = useWallet();
 
   const actionMessages = useMemo<ActionMessages>(
     () => ({
@@ -72,8 +56,7 @@ export const Provider = ({ children, logger }: ProviderProps) => {
       downloadProverDone: undefined,
       submitTxStarted: "Submitting transaction...",
       submitTxDone: undefined,
-      watchForTxDataStarted:
-        "Waiting for transaction finalization on blockchain...",
+      watchForTxDataStarted: "Waiting for transaction finalization on blockchain...",
       watchForTxDataDone: undefined,
     }),
     []
@@ -86,28 +69,16 @@ export const Provider = ({ children, logger }: ProviderProps) => {
     [actionMessages]
   );
 
-  const privateStateProvider: PrivateStateProvider<
-    typeof CounterPrivateStateId
-  > = useMemo(
-    () =>
-      // new WrappedPrivateStateProvider(
-      //   levelPrivateStateProvider({
-      //     privateStateStoreName: "counter-private-state",
-      //   }),
-      //   logger
-      // ),
-      inMemoryPrivateStateProvider<string, CounterPrivateState>(),
-    [logger, status]
+  const privateStateProvider = useMemo(
+    () => inMemoryPrivateStateProvider<typeof CounterPrivateStateId, CounterPrivateState>(),
+    [status]
   );
 
   const publicDataProvider: PublicDataProvider | undefined = useMemo(
     () =>
       serviceUriConfig
         ? new WrappedPublicDataProvider(
-            indexerPublicDataProvider(
-              serviceUriConfig.indexerUri,
-              serviceUriConfig.indexerWsUri
-            ),
+            indexerPublicDataProvider(serviceUriConfig.indexerUri, serviceUriConfig.indexerWsUri),
             providerCallback,
             logger
           )
@@ -116,23 +87,25 @@ export const Provider = ({ children, logger }: ProviderProps) => {
   );
 
   const zkConfigProvider = useMemo(() => {
-    if (typeof window === "undefined") {
-      // Return undefined (or an appropriate fallback) if running on the server.
-      return undefined;
-    }
+    if (typeof window === "undefined") return undefined;
     return new CachedFetchZkConfigProvider<CounterCircuits>(
-      `${window.location.origin}/midnight/counter`,
+      window.location.origin + "/midnight/counter",
       fetch.bind(window),
       () => {}
     );
   }, [status]);
 
-  const proofProvider = useMemo(
-    () =>
-      serviceUriConfig?.proverServerUri
-        ? proofClient(serviceUriConfig.proverServerUri, providerCallback)
-        : noopProofClient(),
-    [serviceUriConfig, providerCallback, status]
+  const proofProvider: ProofProvider = useMemo(
+    () => {
+      if (serviceUriConfig?.proverServerUri && zkConfigProvider) {
+        return httpClientProofProvider(serviceUriConfig.proverServerUri, zkConfigProvider);
+      }
+      return {
+        proveTx: (): Promise<UnboundTransaction> =>
+          Promise.reject(new Error("Proof server not available")),
+      };
+    },
+    [serviceUriConfig, zkConfigProvider, status]
   );
 
   const walletProvider: WalletProvider = useMemo(
@@ -140,88 +113,68 @@ export const Provider = ({ children, logger }: ProviderProps) => {
       connectedAPI
         ? {
             getCoinPublicKey(): ledger.CoinPublicKey {
-              return shieldedAddresses?.shieldedCoinPublicKey as unknown as ledger.CoinPublicKey;
+              return "" as unknown as ledger.CoinPublicKey;
             },
             getEncryptionPublicKey(): ledger.EncPublicKey {
-              return shieldedAddresses?.shieldedEncryptionPublicKey as unknown as ledger.EncPublicKey;
+              return "" as unknown as ledger.EncPublicKey;
             },
             async balanceTx(
-              tx: ledger.UnprovenTransaction,
-              newCoins?: ShieldedCoinInfo[],
-              ttl?: Date
-            ): Promise<BalancedProvingRecipe> {
+              tx: UnboundTransaction,
+              _ttl?: Date
+            ): Promise<ledger.FinalizedTransaction> {
               try {
-                logger.info(
-                  { tx, newCoins, ttl },
-                  "Balancing transaction via wallet"
-                );
+                logger.info("Balancing transaction via wallet");
                 const serializedTx = toHex(tx.serialize());
-                const received =
-                  await connectedAPI.balanceUnsealedTransaction(serializedTx);
-                const transaction: ledger.Transaction<
+                const received = await connectedAPI.balanceUnsealedTransaction(serializedTx);
+                const transaction = ledger.Transaction.deserialize<
                   ledger.SignatureEnabled,
-                  ledger.PreProof,
-                  ledger.PreBinding
-                > = ledger.Transaction.deserialize<
-                  ledger.SignatureEnabled,
-                  ledger.PreProof,
-                  ledger.PreBinding
+                  ledger.Proof,
+                  ledger.Binding
                 >(
                   "signature",
-                  "pre-proof",
-                  "pre-binding",
+                  "proof",
+                  "binding",
                   fromHex(received.tx)
                 );
-                return {
-                  type: "TransactionToProve",
-                  transaction: transaction,
-                };
+                return transaction;
               } catch (e) {
-                logger.error(
-                  { error: e },
-                  "Error balancing transaction via wallet"
-                );
+                logger.error({ error: e }, "Error balancing transaction via wallet");
                 throw e;
               }
             },
           }
         : {
             getCoinPublicKey(): ledger.CoinPublicKey {
-              return "";
+              return "" as unknown as ledger.CoinPublicKey;
             },
             getEncryptionPublicKey(): ledger.EncPublicKey {
-              return "";
+              return "" as unknown as ledger.EncPublicKey;
             },
-            balanceTx: () => Promise.reject(new Error("readonly")),
+            balanceTx: (): Promise<ledger.FinalizedTransaction> => Promise.reject(new Error("readonly")),
           },
-    [connectedAPI, providerCallback, status]
+    [connectedAPI, logger, status]
   );
 
   const midnightProvider: MidnightProvider = useMemo(
     () =>
       connectedAPI
         ? {
-            submitTx: async (
-              tx: ledger.FinalizedTransaction
-            ): Promise<ledger.TransactionId> => {
-              await connectedAPI.submitTransaction(toHex(tx.serialize()));
+            submitTx: async (tx: ledger.FinalizedTransaction): Promise<ledger.TransactionId> => {
+              const serializedTx = toHex(tx.serialize());
+              await connectedAPI.submitTransaction(serializedTx);
               const txIdentifiers = tx.identifiers();
-              const txId = txIdentifiers[0]; // Return the first transaction ID
-              logger.info(
-                { txIdentifiers },
-                "Submitted transaction via wallet"
-              );
+              const txId = txIdentifiers[0];
+              logger.info({ txId }, "Submitted transaction via wallet");
               return txId;
             },
           }
         : {
-            submitTx: (): Promise<ledger.TransactionId> =>
-              Promise.reject(new Error("readonly")),
+            submitTx: (): Promise<ledger.TransactionId> => Promise.reject(new Error("readonly")),
           },
-    [connectedAPI, providerCallback, status]
+    [connectedAPI, logger, status]
   );
 
-  const combinedProviders: ProvidersState = useMemo(() => {
+  const combinedProviders: CounterProvidersState = useMemo(() => {
     return {
       privateStateProvider,
       publicDataProvider,
@@ -229,7 +182,6 @@ export const Provider = ({ children, logger }: ProviderProps) => {
       zkConfigProvider,
       walletProvider,
       midnightProvider,
-      // Only set the nested providers object if publicDataProvider (and others, if needed) are defined.
       providers:
         publicDataProvider && zkConfigProvider
           ? {
@@ -239,23 +191,19 @@ export const Provider = ({ children, logger }: ProviderProps) => {
               proofProvider,
               walletProvider,
               midnightProvider,
-            }
+            } as CounterProviders
           : undefined,
       flowMessage,
     };
-  }, [
-    privateStateProvider,
-    publicDataProvider,
-    proofProvider,
-    zkConfigProvider,
-    walletProvider,
-    midnightProvider,
-    flowMessage,
-  ]);
+  }, [privateStateProvider, publicDataProvider, proofProvider, zkConfigProvider, walletProvider, midnightProvider, flowMessage]);
 
   return (
-    <ProvidersContext.Provider value={combinedProviders}>
+    <CounterProvidersContext.Provider value={combinedProviders}>
       {children}
-    </ProvidersContext.Provider>
+    </CounterProvidersContext.Provider>
   );
 };
+
+export { CounterProvider as Provider };
+export { CounterProvidersContext as ProvidersContext };
+export type { CounterProvidersState as ProvidersState };

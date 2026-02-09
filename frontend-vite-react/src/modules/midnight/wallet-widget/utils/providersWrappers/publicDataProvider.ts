@@ -12,7 +12,7 @@ import type {
   ContractState,
 } from "@midnight-ntwrk/compact-runtime";
 import { retryWithBackoff } from "./retryWithBackoff";
-import type { TransactionId, ZswapChainState } from "@midnight-ntwrk/ledger-v6";
+import type { TransactionId, ZswapChainState } from "@midnight-ntwrk/ledger-v7";
 import type { Observable } from "rxjs";
 
 export type ProviderAction =
@@ -85,7 +85,7 @@ export class WrappedPublicDataProvider implements PublicDataProvider {
   ): Promise<UnshieldedBalances | null> {
     return retryWithBackoff(
       () => this.wrapped.queryUnshieldedBalances(contractAddress, config),
-      "queryZSwapAndContractState",
+      "queryUnshieldedBalances",
       this.logger
     );
   }
@@ -105,7 +105,7 @@ export class WrappedPublicDataProvider implements PublicDataProvider {
   ): Promise<UnshieldedBalances> {
     return retryWithBackoff(
       () => this.wrapped.watchForUnshieldedBalances(contractAddress),
-      "watchForContractState",
+      "watchForUnshieldedBalances",
       this.logger
     );
   }
@@ -121,13 +121,12 @@ export class WrappedPublicDataProvider implements PublicDataProvider {
   }
 
   watchForTxData(txId: TransactionId): Promise<FinalizedTxData> {
-    // calling a callback is a workaround to show in the UI when the watchForTxData is called
     this.callback("watchForTxDataStarted");
     return retryWithBackoff(
       () => this.wrapped.watchForTxData(txId),
       "watchForTxDataStarted",
       this.logger,
-      1000 // we keep retrying long enough
+      1000
     ).finally(() => {
       this.callback("watchForTxDataDone");
     });

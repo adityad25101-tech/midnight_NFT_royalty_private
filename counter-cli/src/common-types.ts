@@ -1,25 +1,15 @@
-import { Counter, type CounterPrivateState } from '@meshsdk/counter-contract';
-import type { ImpureCircuitId, MidnightProviders } from '@midnight-ntwrk/midnight-js-types';
+import { PrivateNftRoyalty, type NftPrivateState } from '@meshsdk/counter-contract';
+import { type Contract } from '@midnight-ntwrk/compact-js';
+import type { MidnightProviders } from '@midnight-ntwrk/midnight-js-types';
 import type { DeployedContract, FoundContract } from '@midnight-ntwrk/midnight-js-contracts';
 
-export type CounterCircuits = ImpureCircuitId<Counter.Contract<CounterPrivateState>>;
+// NFT contract types
+export type NftCircuits = Contract.ImpureCircuitId<PrivateNftRoyalty.Contract<NftPrivateState>>;
 
-export const CounterPrivateStateId = 'counterPrivateState';
+export const NftPrivateStateId = 'nftPrivateState';
 
-export type CounterProviders = MidnightProviders<CounterCircuits, typeof CounterPrivateStateId, CounterPrivateState>;
+export type NftProviders = MidnightProviders<NftCircuits, typeof NftPrivateStateId, NftPrivateState>;
 
-export type CounterContract = Counter.Contract<CounterPrivateState>;
+export type NftContract = PrivateNftRoyalty.Contract<NftPrivateState>;
 
-export type DeployedCounterContract = DeployedContract<CounterContract> | FoundContract<CounterContract>;
-
-export type UserAction = {
-  increment: string | undefined;  
-};
-
-export type DerivedState = {
-  readonly round: Counter.Ledger["round"];
-};
-
-export const emptyState: DerivedState = {
-  round: 0n,
-};
+export type DeployedNftContract = DeployedContract<NftContract> | FoundContract<NftContract>;

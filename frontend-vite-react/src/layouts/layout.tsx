@@ -15,13 +15,21 @@ export const MainLayout = () => {
             Home
           </NavLink>
           <NavLink
+            to="/nft"
+            className={({ isActive }) =>
+              `font-semibold transition hover:opacity-80 ${isActive ? 'underline' : ''}`
+            }
+          >
+            NFT Royalty
+          </NavLink>
+          <NavLink
             to="/counter"
             className={({ isActive }) =>
               `font-semibold transition hover:opacity-80 ${isActive ? 'underline' : ''}`
             }
           >
             Counter
-          </NavLink>        
+          </NavLink>
           <NavLink
             to="/wallet-ui"
             className={({ isActive }) =>

@@ -1,0 +1,13 @@
+{
+  "contractAddress": "f0819a1c5efb9fecc28d5f52a401cdff1436becb9ee419bb65fccedb5366eb92",
+  "deployedAt": "2026-02-08T18:57:14.287Z",
+  "network": "local",
+  "walletAddress": "mn_addr_undeployed1h3ssm5ru2t6eqy4g3she78zlxn96e36ms6pq996aduvmateh9p9sk96u7s",
+  "contract": "private_nft_royalty",
+  "config": {
+    "indexer": "http://127.0.0.1:8088/api/v3/graphql",
+    "indexerWS": "ws://127.0.0.1:8088/api/v3/graphql/ws",
+    "node": "ws://127.0.0.1:9944",
+    "proofServer": "http://127.0.0.1:6300"
+  }
+}

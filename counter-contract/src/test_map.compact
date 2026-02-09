@@ -1,0 +1,9 @@
+pragma language_version >= 0.19;
+
+import CompactStandardLibrary;
+
+export ledger m: Map<Bytes<32>, Bytes<32>>;
+
+export circuit test_set(k: Bytes<32>, v: Bytes<32>): [] {
+  m.insert(k, v);
+}

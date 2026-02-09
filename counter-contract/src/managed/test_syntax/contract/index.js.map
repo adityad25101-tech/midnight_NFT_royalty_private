@@ -1,0 +1,8 @@
+{
+  "version": 3,
+  "file": "index.js",
+  "sourceRoot": "../../../",
+  "sources": ["test_syntax.compact"],
+  "names": [],
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;EAAA;;;;;;;;;;MAQA,AAAA,OAEC;;;;;;;;;;;;;;;;;;;;;;OAAA;;;GACA;EAXD;;;;;;;;;;;;;;;;;;;;;;;;;;IAMA;;;;;;;;;yEAAwB;;;;;;;GAKvB;EAHD,AAAA,UAEC;UADC,KAAO;IAAP;;;;;;;;;;6FAAA,KAAO;;;;wEAAA;;GACR;;;;;;;;;;;;;;;;;;;;;;;;;"
+}
