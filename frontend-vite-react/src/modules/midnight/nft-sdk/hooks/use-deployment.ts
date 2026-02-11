@@ -1,12 +1,10 @@
 import { useContext } from 'react';
 import { NftDeployedProviderContext, type NftDeployedAPIProvider } from '../contexts';
 
-export const useNftDeployedContracts = (): NftDeployedAPIProvider => {
+export const useNftDeployedContracts = (): NftDeployedAPIProvider | null => {
   const context = useContext(NftDeployedProviderContext);
-
   if (!context) {
-    throw new Error('A wallet and NftProvider context is required.');
+    return null;
   }
-
   return context;
 };

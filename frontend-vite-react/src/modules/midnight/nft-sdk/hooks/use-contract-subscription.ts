@@ -21,12 +21,14 @@ export const useNftContractSubscription = () => {
     useState<ContractControllerInterface>();
   const [derivedState, setDerivedState] = useState<DerivedState>();
 
-  const onDeploy = async (): Promise<NftContractFollow> => {
+  const onDeploy = async (): Promise<NftContractFollow | null> => {
+    if (!deploy) return null;
     const contractFollow = await deploy.deployContract();
     return contractFollow;
   };
 
   const onJoin = useCallback(async (): Promise<void> => {
+    if (!deploy) return;
     setNftDeploymentObservable(deploy.joinContract().observable);
   }, [deploy, setNftDeploymentObservable]);
 

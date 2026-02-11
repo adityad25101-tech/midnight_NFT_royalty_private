@@ -1,6 +1,6 @@
 {
-  "contractAddress": "f0819a1c5efb9fecc28d5f52a401cdff1436becb9ee419bb65fccedb5366eb92",
-  "deployedAt": "2026-02-08T18:57:14.287Z",
+  "contractAddress": "2060ecf8aba46009784764e135647421996c0a6d0f9d55986ce507ef145df87c",
+  "deployedAt": "2026-02-11T08:25:51.560Z",
   "network": "local",
   "walletAddress": "mn_addr_undeployed1h3ssm5ru2t6eqy4g3she78zlxn96e36ms6pq996aduvmateh9p9sk96u7s",
   "contract": "private_nft_royalty",

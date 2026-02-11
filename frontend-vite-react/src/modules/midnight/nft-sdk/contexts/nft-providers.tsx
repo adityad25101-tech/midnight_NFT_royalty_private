@@ -45,7 +45,7 @@ export const NftProvidersContext = createContext<NftProvidersState | undefined>(
 
 export const NftProvider = ({ children, logger }: NftProviderProps) => {
   const [flowMessage, setFlowMessage] = useState<string | undefined>(undefined);
-  const { serviceUriConfig, connectedAPI, status } = useWallet();
+  const { serviceUriConfig, connectedAPI, status, shieldedAddresses } = useWallet();
 
   const actionMessages = useMemo<ActionMessages>(
     () => ({
@@ -114,10 +114,10 @@ export const NftProvider = ({ children, logger }: NftProviderProps) => {
       connectedAPI
         ? {
             getCoinPublicKey(): ledger.CoinPublicKey {
-              return "" as unknown as ledger.CoinPublicKey;
+              return (shieldedAddresses?.shieldedCoinPublicKey ?? '') as ledger.CoinPublicKey;
             },
             getEncryptionPublicKey(): ledger.EncPublicKey {
-              return "" as unknown as ledger.EncPublicKey;
+              return (shieldedAddresses?.shieldedEncryptionPublicKey ?? '') as ledger.EncPublicKey;
             },
             async balanceTx(
               tx: UnboundTransaction,
@@ -138,7 +138,22 @@ export const NftProvider = ({ children, logger }: NftProviderProps) => {
                   fromHex(received.tx)
                 );
                 return transaction;
-              } catch (e) {
+              } catch (e: any) {
+                // Unwrap FiberFailure / Effect error chain
+                let rootCause = e;
+                let depth = 0;
+                while (rootCause?.cause && depth < 10) {
+                  rootCause = rootCause.cause;
+                  depth++;
+                }
+                const errMsg = rootCause?.message || rootCause?.error?.message || rootCause?.toString?.() || String(e);
+                console.error("=== BALANCE TX ERROR (root cause) ===");
+                console.error("Message:", errMsg);
+                console.error("Root cause object:", rootCause);
+                console.error("Original error:", e);
+                console.error("Cause chain depth:", depth);
+                if (rootCause?.error) console.error("Inner error:", rootCause.error);
+                if (rootCause?.stack) console.error("Stack:", rootCause.stack);
                 logger.error({ error: e }, "Error balancing transaction via wallet");
                 throw e;
               }
@@ -146,10 +161,10 @@ export const NftProvider = ({ children, logger }: NftProviderProps) => {
           }
         : {
             getCoinPublicKey(): ledger.CoinPublicKey {
-              return "" as unknown as ledger.CoinPublicKey;
+              return (shieldedAddresses?.shieldedCoinPublicKey ?? '') as ledger.CoinPublicKey;
             },
             getEncryptionPublicKey(): ledger.EncPublicKey {
-              return "" as unknown as ledger.EncPublicKey;
+              return (shieldedAddresses?.shieldedEncryptionPublicKey ?? '') as ledger.EncPublicKey;
             },
             balanceTx: (): Promise<ledger.FinalizedTransaction> => Promise.reject(new Error("readonly")),
           },

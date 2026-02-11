@@ -21,12 +21,14 @@ export const useContractSubscription = () => {
     useState<ContractControllerInterface>();
   const [derivedState, setDerivedState] = useState<DerivedState>();
 
-  const onDeploy = async (): Promise<ContractFollow> => {
+  const onDeploy = async (): Promise<ContractFollow | null> => {
+    if (!deploy) return null;
     const contractFollow = await deploy.deployContract();
     return contractFollow;
   };
 
   const onJoin = useCallback(async (): Promise<void> => {
+    if (!deploy) return;
     setCounterDeploymentObservable(deploy.joinContract().observable);
   }, [deploy, setCounterDeploymentObservable]);
 

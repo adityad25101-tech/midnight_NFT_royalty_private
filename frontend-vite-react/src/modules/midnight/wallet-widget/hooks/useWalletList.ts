@@ -5,10 +5,21 @@ import { MidnightBrowserWallet } from "../api/walletController";
 export const useWalletList = () => {
   const [wallets, setWallets] = useState<InitialAPI[]>([]);
   useEffect(() => {
-    async function get() {
-      setWallets(MidnightBrowserWallet.getAvailableWallets());
-    }
-    get();
+    // Lace injects window.midnight asynchronously; poll until found
+    let attempts = 0;
+    const maxAttempts = 30; // try for ~3 seconds
+
+    const check = () => {
+      const found = MidnightBrowserWallet.getAvailableWallets();
+      if (found.length > 0 || attempts >= maxAttempts) {
+        setWallets(found);
+        return;
+      }
+      attempts++;
+      setTimeout(check, 100);
+    };
+
+    check();
   }, []);
 
   return wallets;

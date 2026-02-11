@@ -44,7 +44,7 @@ export const CounterProvidersContext = createContext<CounterProvidersState | und
 
 export const CounterProvider = ({ children, logger }: CounterProviderProps) => {
   const [flowMessage, setFlowMessage] = useState<string | undefined>(undefined);
-  const { serviceUriConfig, connectedAPI, status } = useWallet();
+  const { serviceUriConfig, connectedAPI, status, shieldedAddresses } = useWallet();
 
   const actionMessages = useMemo<ActionMessages>(
     () => ({
@@ -113,10 +113,10 @@ export const CounterProvider = ({ children, logger }: CounterProviderProps) => {
       connectedAPI
         ? {
             getCoinPublicKey(): ledger.CoinPublicKey {
-              return "" as unknown as ledger.CoinPublicKey;
+              return (shieldedAddresses?.shieldedCoinPublicKey ?? '') as ledger.CoinPublicKey;
             },
             getEncryptionPublicKey(): ledger.EncPublicKey {
-              return "" as unknown as ledger.EncPublicKey;
+              return (shieldedAddresses?.shieldedEncryptionPublicKey ?? '') as ledger.EncPublicKey;
             },
             async balanceTx(
               tx: UnboundTransaction,
@@ -137,7 +137,9 @@ export const CounterProvider = ({ children, logger }: CounterProviderProps) => {
                   fromHex(received.tx)
                 );
                 return transaction;
-              } catch (e) {
+              } catch (e: any) {
+                const errMsg = e?.message || e?.toString?.() || String(e);
+                console.error("Error balancing transaction via wallet:", errMsg, e);
                 logger.error({ error: e }, "Error balancing transaction via wallet");
                 throw e;
               }
@@ -145,10 +147,10 @@ export const CounterProvider = ({ children, logger }: CounterProviderProps) => {
           }
         : {
             getCoinPublicKey(): ledger.CoinPublicKey {
-              return "" as unknown as ledger.CoinPublicKey;
+              return (shieldedAddresses?.shieldedCoinPublicKey ?? '') as ledger.CoinPublicKey;
             },
             getEncryptionPublicKey(): ledger.EncPublicKey {
-              return "" as unknown as ledger.EncPublicKey;
+              return (shieldedAddresses?.shieldedEncryptionPublicKey ?? '') as ledger.EncPublicKey;
             },
             balanceTx: (): Promise<ledger.FinalizedTransaction> => Promise.reject(new Error("readonly")),
           },

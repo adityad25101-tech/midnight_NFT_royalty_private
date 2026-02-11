@@ -151,6 +151,14 @@ export const NftPage = () => {
     return entry;
   };
 
+  // ─── Helper: Convert a user string into a fixed Bytes<32> Uint8Array ───
+  const stringToBytes32 = (str: string): Uint8Array => {
+    const arr = new Uint8Array(32);
+    const encoded = new TextEncoder().encode(str);
+    arr.set(encoded.slice(0, 32)); // copy up to 32 bytes, rest stays 0
+    return arr;
+  };
+
   // ─── On-chain mint (wallet connected) ───
   const [isOnChainProcessing, setIsOnChainProcessing] = useState(false);
 
@@ -170,8 +178,9 @@ export const NftPage = () => {
     setIsOnChainProcessing(true);
     setWalletMessage("Submitting mint transaction via Midnight Lace wallet...");
     try {
-      const tokenBytes = new TextEncoder().encode(id.padEnd(32, '\0').slice(0, 32));
-      const creatorBytes = new TextEncoder().encode(cr.padEnd(32, '\0').slice(0, 32));
+      const tokenBytes = stringToBytes32(id);
+      const creatorBytes = stringToBytes32(cr);
+      console.log('Mint args:', { tokenBytes, creatorBytes, royalty: BigInt(pct) });
       await deployedContractAPI.mint(tokenBytes, creatorBytes, BigInt(pct));
       const tx = addTxLog("mint", `Token "${id}" minted by ${cr} (royalty ${pct}% private)`, true);
 
@@ -206,9 +215,10 @@ export const NftPage = () => {
     setIsOnChainProcessing(true);
     setWalletMessage("Submitting transfer transaction via Midnight Lace wallet...");
     try {
-      const tokenBytes = new TextEncoder().encode(id.padEnd(32, '\0').slice(0, 32));
-      const senderBytes = new TextEncoder().encode(nft.owner.padEnd(32, '\0').slice(0, 32));
-      const receiverBytes = new TextEncoder().encode(recv.padEnd(32, '\0').slice(0, 32));
+      const tokenBytes = stringToBytes32(id);
+      const senderBytes = stringToBytes32(nft.owner);
+      const receiverBytes = stringToBytes32(recv);
+      console.log('Transfer args:', { tokenBytes, senderBytes, receiverBytes });
       await deployedContractAPI.transfer(tokenBytes, senderBytes, receiverBytes);
 
       const prevOwner = nft.owner;
@@ -238,7 +248,8 @@ export const NftPage = () => {
     setIsOnChainProcessing(true);
     setWalletMessage(`Querying ${type} on-chain...`);
     try {
-      const tokenBytes = new TextEncoder().encode(id.padEnd(32, '\0').slice(0, 32));
+      const tokenBytes = stringToBytes32(id);
+      console.log('Lookup args:', { tokenBytes, type });
       if (type === "owner") {
         await deployedContractAPI.getOwner(tokenBytes);
       } else {
