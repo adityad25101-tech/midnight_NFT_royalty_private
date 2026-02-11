@@ -2,6 +2,10 @@
 
 > A privacy-preserving NFT smart contract where royalty percentages are kept confidential through zero-knowledge proofs on the Midnight blockchain.
 
+## 🎥 Demo Video
+
+**[Watch the Full Demo Walkthrough on Google Drive](https://drive.google.com/file/d/1mL363Jk2Ppahlpgzv-yBnynP2XPdLiHA/view?usp=sharing)**
+
 ## Overview
 
 This project implements **Private NFT Royalty** — a Compact smart contract deployed on the Midnight network that allows minting, transferring, and querying NFTs while keeping royalty information private. The royalty percentage is stored in the contract's private state, accessible only through ZK-proven witnesses, ensuring that sensitive financial terms remain confidential on-chain.
