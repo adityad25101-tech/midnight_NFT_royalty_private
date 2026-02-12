@@ -4,7 +4,7 @@
 
 ## 🎥 Demo Video
 
-**[Watch the Full Demo Walkthrough on Google Drive](https://drive.google.com/file/d/1mL363Jk2Ppahlpgzv-yBnynP2XPdLiHA/view?usp=sharing)**
+**[Watch the Full Demo Walkthrough on Google Drive](https://drive.google.com/file/d/1M0wjaxL69_rNIrq6MwYMDps8aBjQxA5z/view?usp=sharing)**
 
 ## Overview
 
@@ -259,3 +259,4 @@ Navigate to `http://localhost:5173/nft` to interact with the Private NFT Royalty
 ## License
 
 Built for the Midnight Hackathon — Idea #125 submission.
+
