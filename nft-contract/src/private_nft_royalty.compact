@@ -1,0 +1,40 @@
+// Private NFT Royalty Contract for Midnight
+// Idea #125 - Royalty percentages are kept private using ZK
+
+pragma language_version >= 0.19;
+
+import CompactStandardLibrary;
+
+// Public ledger state
+export ledger next_token_id: Counter;
+export ledger nft_owner: Map<Bytes<32>, Bytes<32>>;
+export ledger nft_creator: Map<Bytes<32>, Bytes<32>>;
+
+// Private state: royalty kept secret via witnesses
+witness get_royalty(): Field;
+witness set_royalty(pct: Field): [];
+
+// Mint a new NFT with a private royalty percentage
+export circuit mint(token_id: Bytes<32>, creator: Bytes<32>, secret_royalty: Field): [] {
+  next_token_id.increment(1);
+  nft_owner.insert(disclose(token_id), disclose(creator));
+  nft_creator.insert(disclose(token_id), disclose(creator));
+  set_royalty(secret_royalty);
+}
+
+// Transfer NFT ownership
+export circuit transfer(token_id: Bytes<32>, sender: Bytes<32>, receiver: Bytes<32>): [] {
+  const current_owner = nft_owner.lookup(disclose(token_id));
+  assert(current_owner == sender, "Not the owner");
+  nft_owner.insert(disclose(token_id), disclose(receiver));
+}
+
+// Query owner (public read)
+export circuit get_owner(token_id: Bytes<32>): Bytes<32> {
+  return nft_owner.lookup(disclose(token_id));
+}
+
+// Query creator (public read)
+export circuit get_creator(token_id: Bytes<32>): Bytes<32> {
+  return nft_creator.lookup(disclose(token_id));
+}
