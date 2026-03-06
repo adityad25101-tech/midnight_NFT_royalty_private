@@ -2,6 +2,8 @@
 
 > A privacy-preserving NFT smart contract where royalty percentages are kept confidential through zero-knowledge proofs on the Midnight blockchain.
 
+This project is built on the Midnight Network.
+
 ## 🎥 Demo Video
 
 **[Watch the Full Demo Walkthrough on Google Drive](https://drive.google.com/file/d/1M0wjaxL69_rNIrq6MwYMDps8aBjQxA5z/view?usp=sharing)**
